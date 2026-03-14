@@ -13,11 +13,9 @@ use Phpactor\LanguageServerProtocol\Location;
 use Phpactor\LanguageServerProtocol\ServerCapabilities;
 use RyanChandler\Sabre\LanguageServer\Feature\Definition\BladeDefinitionProvider;
 
-final class DefinitionHandler implements Handler, CanRegisterCapabilities
+final class DefinitionHandler implements CanRegisterCapabilities, Handler
 {
-    public function __construct(private readonly BladeDefinitionProvider $provider)
-    {
-    }
+    public function __construct(private readonly BladeDefinitionProvider $provider) {}
 
     public function methods(): array
     {

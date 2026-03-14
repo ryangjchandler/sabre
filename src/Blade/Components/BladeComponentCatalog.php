@@ -7,36 +7,37 @@ namespace RyanChandler\Sabre\Blade\Components;
 use Forte\Ast\DirectiveNode;
 use PhpParser\Error;
 use PhpParser\Node;
-use PhpParser\Node\Identifier;
-use PhpParser\Node\NullableType;
-use PhpParser\Node\Param;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ConstFetch;
-use PhpParser\Node\Name;
-use PhpParser\Node\UnionType;
+use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
-use PhpParser\Node\Stmt\ClassMethod;
-use PhpParser\Node\Stmt\Class_;
-use PhpParser\Node\Stmt;
+use PhpParser\Node\Name;
+use PhpParser\Node\NullableType;
+use PhpParser\Node\Param;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt;
+use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\UnionType;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
-use SplFileInfo;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
+use SplFileInfo;
 
 final class BladeComponentCatalog
 {
     private Parser $phpParser;
+
     private Standard $prettyPrinter;
 
     public function __construct(private readonly ForteDocumentParser $documentParser)
     {
-        $this->phpParser = (new ParserFactory())->createForNewestSupportedVersion();
-        $this->prettyPrinter = new Standard();
+        $this->phpParser = (new ParserFactory)->createForNewestSupportedVersion();
+        $this->prettyPrinter = new Standard;
     }
 
     /**
@@ -128,7 +129,7 @@ final class BladeComponentCatalog
     {
         $templatePath = $this->resolveComponentTemplatePath($uri, $componentName);
 
-        if ($templatePath === null || !is_file($templatePath)) {
+        if ($templatePath === null || ! is_file($templatePath)) {
             return false;
         }
 
@@ -142,7 +143,7 @@ final class BladeComponentCatalog
             || preg_match('/@(isset|empty)\s*\(\s*\$slot\s*\)/', $contents) === 1
             || preg_match('/@if\s*\(\s*isset\(\s*\$slot\s*\)\s*\)/', $contents) === 1;
 
-        if (preg_match('/\$slot\b/', $contents) === 1 && !$optionalOnlyDefaultSlot) {
+        if (preg_match('/\$slot\b/', $contents) === 1 && ! $optionalOnlyDefaultSlot) {
             return true;
         }
 
@@ -162,7 +163,7 @@ final class BladeComponentCatalog
     {
         $templatePath = $this->resolveComponentTemplatePath($uri, $componentName);
 
-        if ($templatePath === null || !is_file($templatePath)) {
+        if ($templatePath === null || ! is_file($templatePath)) {
             return [];
         }
 
@@ -183,7 +184,7 @@ final class BladeComponentCatalog
         $props = [];
 
         foreach ($document->findDirectivesByName('props') as $directive) {
-            if (!$directive instanceof DirectiveNode || !$directive->hasArguments()) {
+            if (! $directive instanceof DirectiveNode || ! $directive->hasArguments()) {
                 continue;
             }
 
@@ -212,7 +213,7 @@ final class BladeComponentCatalog
 
         preg_match_all('/\$([A-Za-z_][A-Za-z0-9_]*)/', $contents, $matches);
 
-        if (!isset($matches[1]) || !is_array($matches[1])) {
+        if (! isset($matches[1]) || ! is_array($matches[1])) {
             return [];
         }
 
@@ -246,7 +247,7 @@ final class BladeComponentCatalog
         $isGuarded = preg_match('/@(isset|empty)\s*\(\s*\$'.$escaped.'\s*\)/', $contents) === 1
             || preg_match('/@if\s*\(\s*isset\(\s*\$'.$escaped.'\s*\)\s*\)/', $contents) === 1;
 
-        return !$isGuarded;
+        return ! $isGuarded;
     }
 
     /**
@@ -274,7 +275,7 @@ final class BladeComponentCatalog
             .DIRECTORY_SEPARATOR.'views'
             .DIRECTORY_SEPARATOR.'components';
 
-        if (!is_dir($componentPath)) {
+        if (! is_dir($componentPath)) {
             return [];
         }
 
@@ -286,12 +287,12 @@ final class BladeComponentCatalog
 
         /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
-            if (!$file->isFile()) {
+            if (! $file->isFile()) {
                 continue;
             }
 
             $path = $file->getPathname();
-            if (!str_ends_with($path, '.blade.php')) {
+            if (! str_ends_with($path, '.blade.php')) {
                 continue;
             }
 
@@ -321,7 +322,7 @@ final class BladeComponentCatalog
             .DIRECTORY_SEPARATOR.'View'
             .DIRECTORY_SEPARATOR.'Components';
 
-        if (!is_dir($componentPath)) {
+        if (! is_dir($componentPath)) {
             return [];
         }
 
@@ -332,12 +333,12 @@ final class BladeComponentCatalog
 
         /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
-            if (!$file->isFile()) {
+            if (! $file->isFile()) {
                 continue;
             }
 
             $path = $file->getPathname();
-            if (!str_ends_with($path, '.php')) {
+            if (! str_ends_with($path, '.php')) {
                 continue;
             }
 
@@ -385,8 +386,9 @@ final class BladeComponentCatalog
         foreach ($attributes as $attribute) {
             $name = $attribute['name'];
 
-            if (!isset($index[$name])) {
+            if (! isset($index[$name])) {
                 $index[$name] = $attribute['isBoolean'];
+
                 continue;
             }
 
@@ -420,7 +422,7 @@ final class BladeComponentCatalog
                 $document = $this->documentParser->parseFile($componentTemplate);
 
                 foreach ($document->findDirectivesByName('props') as $directive) {
-                    if (!$directive instanceof DirectiveNode || !$directive->hasArguments()) {
+                    if (! $directive instanceof DirectiveNode || ! $directive->hasArguments()) {
                         continue;
                     }
 
@@ -440,8 +442,9 @@ final class BladeComponentCatalog
         foreach ($props as $prop) {
             $name = $prop['name'];
 
-            if (!isset($merged[$name])) {
+            if (! isset($merged[$name])) {
                 $merged[$name] = $prop;
+
                 continue;
             }
 
@@ -487,13 +490,13 @@ final class BladeComponentCatalog
             return [];
         }
 
-        if ($statements === null || !isset($statements[0]) || !property_exists($statements[0], 'expr')) {
+        if ($statements === null || ! isset($statements[0]) || ! property_exists($statements[0], 'expr')) {
             return [];
         }
 
         $expr = $statements[0]->expr;
 
-        if (!$expr instanceof Array_) {
+        if (! $expr instanceof Array_) {
             return [];
         }
 
@@ -513,6 +516,7 @@ final class BladeComponentCatalog
                     'default' => $this->prettyPrintExpression($item->value),
                     'source' => 'template',
                 ];
+
                 continue;
             }
 
@@ -560,14 +564,14 @@ final class BladeComponentCatalog
 
         $constructor = $classNode->getMethod('__construct');
 
-        if (!$constructor instanceof ClassMethod) {
+        if (! $constructor instanceof ClassMethod) {
             return [];
         }
 
         $attributes = [];
 
         foreach ($constructor->params as $param) {
-            if (!$param instanceof Param || !$param->var instanceof Node\Expr\Variable || !is_string($param->var->name)) {
+            if (! $param instanceof Param || ! $param->var instanceof Node\Expr\Variable || ! is_string($param->var->name)) {
                 continue;
             }
 
@@ -591,7 +595,7 @@ final class BladeComponentCatalog
 
     private function isBooleanExpression(Node\Expr $expression): bool
     {
-        if (!$expression instanceof ConstFetch) {
+        if (! $expression instanceof ConstFetch) {
             return false;
         }
 
@@ -668,7 +672,7 @@ final class BladeComponentCatalog
                 return $node;
             }
 
-            if ($node instanceof Node\Stmt\Namespace_) {
+            if ($node instanceof Stmt\Namespace_) {
                 $classInNamespace = $this->firstClassNode($node->stmts);
                 if ($classInNamespace instanceof Class_) {
                     return $classInNamespace;

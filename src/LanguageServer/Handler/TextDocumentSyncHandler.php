@@ -23,13 +23,12 @@ use Phpactor\LanguageServerProtocol\TextDocumentSyncKind;
 use Phpactor\LanguageServerProtocol\WillSaveTextDocumentParams;
 use Psr\EventDispatcher\EventDispatcherInterface;
 
-final class TextDocumentSyncHandler implements Handler, CanRegisterCapabilities
+final class TextDocumentSyncHandler implements CanRegisterCapabilities, Handler
 {
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
         private readonly Workspace $workspace,
-    ) {
-    }
+    ) {}
 
     public function methods(): array
     {
@@ -58,22 +57,26 @@ final class TextDocumentSyncHandler implements Handler, CanRegisterCapabilities
         foreach ($params->contentChanges as $contentChange) {
             if ($contentChange instanceof TextDocumentContentChangeIncrementalEvent) {
                 $text = $this->applyIncrementalChange($text, $contentChange->range, $contentChange->text);
+
                 continue;
             }
 
             if (is_object($contentChange) && isset($contentChange->range, $contentChange->text) && $contentChange->range instanceof Range) {
                 /** @var object{range: Range, text: string} $contentChange */
                 $text = $this->applyIncrementalChange($text, $contentChange->range, (string) $contentChange->text);
+
                 continue;
             }
 
             if (is_object($contentChange) && property_exists($contentChange, 'text')) {
                 $text = (string) $contentChange->text;
+
                 continue;
             }
 
             if (is_array($contentChange) && isset($contentChange['range'], $contentChange['text']) && $contentChange['range'] instanceof Range) {
                 $text = $this->applyIncrementalChange($text, $contentChange['range'], (string) $contentChange['text']);
+
                 continue;
             }
 
@@ -95,13 +98,9 @@ final class TextDocumentSyncHandler implements Handler, CanRegisterCapabilities
         $this->dispatcher->dispatch(new TextDocumentSaved($params->textDocument, $params->text));
     }
 
-    public function willSave(WillSaveTextDocumentParams $params): void
-    {
-    }
+    public function willSave(WillSaveTextDocumentParams $params): void {}
 
-    public function willSaveWaitUntil(WillSaveTextDocumentParams $params): void
-    {
-    }
+    public function willSaveWaitUntil(WillSaveTextDocumentParams $params): void {}
 
     public function registerCapabiltiies(ServerCapabilities $capabilities): void
     {

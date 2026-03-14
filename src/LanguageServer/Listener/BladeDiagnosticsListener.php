@@ -23,14 +23,13 @@ final class BladeDiagnosticsListener implements ListenerProviderInterface
         private readonly ClientApi $clientApi,
         private readonly ForteDocumentParser $documentParser,
         private readonly ForteDiagnosticConverter $diagnosticConverter,
-    ) {
-    }
+    ) {}
 
     public function getListenersForEvent(object $event): iterable
     {
         if ($event instanceof TextDocumentOpened) {
             yield function (TextDocumentOpened $opened): void {
-                if (!$this->isBladeUri($opened->textDocument()->uri)) {
+                if (! $this->isBladeUri($opened->textDocument()->uri)) {
                     return;
                 }
 
@@ -46,7 +45,7 @@ final class BladeDiagnosticsListener implements ListenerProviderInterface
 
         if ($event instanceof TextDocumentUpdated) {
             yield function (TextDocumentUpdated $updated): void {
-                if (!$this->isBladeUri($updated->identifier()->uri)) {
+                if (! $this->isBladeUri($updated->identifier()->uri)) {
                     return;
                 }
 
@@ -64,7 +63,7 @@ final class BladeDiagnosticsListener implements ListenerProviderInterface
             yield function (TextDocumentSaved $saved): void {
                 $uri = $saved->identifier()->uri;
 
-                if (!$this->isBladeUri($uri)) {
+                if (! $this->isBladeUri($uri)) {
                     return;
                 }
 
@@ -90,7 +89,7 @@ final class BladeDiagnosticsListener implements ListenerProviderInterface
 
         if ($event instanceof TextDocumentClosed) {
             yield function (TextDocumentClosed $closed): void {
-                if (!$this->isBladeUri($closed->identifier()->uri)) {
+                if (! $this->isBladeUri($closed->identifier()->uri)) {
                     return;
                 }
 
@@ -103,7 +102,7 @@ final class BladeDiagnosticsListener implements ListenerProviderInterface
     {
         $path = parse_url($uri, PHP_URL_PATH);
 
-        if (!is_string($path) || $path === '') {
+        if (! is_string($path) || $path === '') {
             return false;
         }
 

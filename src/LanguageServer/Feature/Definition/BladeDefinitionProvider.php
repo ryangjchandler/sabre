@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace RyanChandler\Sabre\LanguageServer\Feature\Definition;
 
-use Forte\Ast\Elements\ElementNode;
 use Forte\Ast\Elements\ElementNameNode;
+use Forte\Ast\Elements\ElementNode;
 use Phpactor\LanguageServer\Core\Workspace\Workspace;
 use Phpactor\LanguageServerProtocol\DefinitionParams;
 use Phpactor\LanguageServerProtocol\Location;
 use Phpactor\LanguageServerProtocol\Position;
 use Phpactor\LanguageServerProtocol\Range;
+use RuntimeException;
 use RyanChandler\Sabre\Blade\Components\BladeComponentCatalog;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
-use RuntimeException;
 
 final class BladeDefinitionProvider
 {
@@ -21,8 +21,7 @@ final class BladeDefinitionProvider
         private readonly Workspace $workspace,
         private readonly ForteDocumentParser $documentParser,
         private readonly BladeComponentCatalog $componentCatalog,
-    ) {
-    }
+    ) {}
 
     public function provide(DefinitionParams $params): ?Location
     {
@@ -37,12 +36,12 @@ final class BladeDefinitionProvider
         $node = $this->nodeAtPosition($document, $params->position->line, $params->position->character);
         $element = $this->resolveComponentElementFromNode($node);
 
-        if (!$element instanceof ElementNode || !$element->isComponent()) {
+        if (! $element instanceof ElementNode || ! $element->isComponent()) {
             return null;
         }
 
         $tagName = strtolower($element->tagNameText());
-        if (!str_starts_with($tagName, 'x-')) {
+        if (! str_starts_with($tagName, 'x-')) {
             return null;
         }
 
@@ -74,9 +73,9 @@ final class BladeDefinitionProvider
         }
     }
 
-    private function nodeAtPosition(object $document, int $line, int $character): object|null
+    private function nodeAtPosition(object $document, int $line, int $character): ?object
     {
-        if (!method_exists($document, 'findNodeAtPosition')) {
+        if (! method_exists($document, 'findNodeAtPosition')) {
             return null;
         }
 

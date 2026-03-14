@@ -11,15 +11,13 @@ use SplFileInfo;
 
 final class TestWorkspace
 {
-    private function __construct(private readonly string $rootPath)
-    {
-    }
+    private function __construct(private readonly string $rootPath) {}
 
     public static function create(): self
     {
         $path = sprintf('%s/sabre-tests-%s', rtrim(sys_get_temp_dir(), '/'), bin2hex(random_bytes(8)));
 
-        if (!mkdir($path, 0777, true) && !is_dir($path)) {
+        if (! mkdir($path, 0777, true) && ! is_dir($path)) {
             throw new RuntimeException(sprintf('Unable to create test workspace at "%s".', $path));
         }
 
@@ -28,7 +26,7 @@ final class TestWorkspace
 
     public function __destruct()
     {
-        if (!is_dir($this->rootPath)) {
+        if (! is_dir($this->rootPath)) {
             return;
         }
 
@@ -63,7 +61,7 @@ final class TestWorkspace
         $absolutePath = sprintf('%s/%s', $this->rootPath, $normalizedPath);
         $directory = dirname($absolutePath);
 
-        if (!is_dir($directory) && !mkdir($directory, 0777, true) && !is_dir($directory)) {
+        if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
             throw new RuntimeException(sprintf('Unable to create test directory "%s".', $directory));
         }
 

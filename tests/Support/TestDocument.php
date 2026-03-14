@@ -13,8 +13,7 @@ final class TestDocument
         public readonly string $content,
         public readonly ?int $cursorLine,
         public readonly ?int $cursorCharacter
-    ) {
-    }
+    ) {}
 
     public function hasCursor(): bool
     {

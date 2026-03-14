@@ -11,6 +11,5 @@ final class Toast extends Component
         public string $variant = 'info',
         public bool $dismissible = true,
         public ?string $position = null,
-    ) {
-    }
+    ) {}
 }

@@ -16,9 +16,9 @@ use Phpactor\LanguageServerProtocol\CompletionList;
 use Phpactor\LanguageServerProtocol\CompletionParams;
 use Phpactor\LanguageServerProtocol\InsertTextFormat;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use RyanChandler\Sabre\Blade\Components\BladeComponentCatalog;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
-use RuntimeException;
 
 final class BladeCompletionProvider
 {
@@ -27,8 +27,7 @@ final class BladeCompletionProvider
         private readonly ForteDocumentParser $documentParser,
         private readonly BladeComponentCatalog $componentCatalog,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function provide(CompletionParams $params): CompletionList
     {
@@ -85,7 +84,7 @@ final class BladeCompletionProvider
             return new CompletionList(false, $this->componentCompletions($uri));
         }
 
-        if (!$this->shouldProvideDirectiveCompletions($node, $linePrefix)) {
+        if (! $this->shouldProvideDirectiveCompletions($node, $linePrefix)) {
             return new CompletionList(false, []);
         }
 
@@ -114,7 +113,7 @@ final class BladeCompletionProvider
         return new CompletionList(false, $items);
     }
 
-    private function shouldProvideDirectiveCompletions(object|null $node, ?string $linePrefix): bool
+    private function shouldProvideDirectiveCompletions(?object $node, ?string $linePrefix): bool
     {
         if ($linePrefix === null) {
             return false;
@@ -139,7 +138,7 @@ final class BladeCompletionProvider
         return true;
     }
 
-    private function isComponentNameContext(object|null $node, ?string $linePrefix): bool
+    private function isComponentNameContext(?object $node, ?string $linePrefix): bool
     {
         if ($linePrefix === null) {
             return false;
@@ -154,7 +153,7 @@ final class BladeCompletionProvider
         return $matchesOpenComponentPrefix;
     }
 
-    private function isComponentAttributeContext(object|null $node, string $documentPrefix): bool
+    private function isComponentAttributeContext(?object $node, string $documentPrefix): bool
     {
         if (preg_match('/<x-[A-Za-z0-9_\-.:]+\s[^>]*$/s', $documentPrefix) !== 1) {
             return false;
@@ -178,9 +177,9 @@ final class BladeCompletionProvider
         }
     }
 
-    private function nodeAtPosition(object $document, int $line, int $character): object|null
+    private function nodeAtPosition(object $document, int $line, int $character): ?object
     {
-        if (!method_exists($document, 'findNodeAtPosition')) {
+        if (! method_exists($document, 'findNodeAtPosition')) {
             return null;
         }
 
@@ -255,8 +254,9 @@ final class BladeCompletionProvider
         foreach ($definitions as $definition) {
             $name = $definition['name'];
 
-            if (!isset($mergedDefinitions[$name])) {
+            if (! isset($mergedDefinitions[$name])) {
                 $mergedDefinitions[$name] = $definition;
+
                 continue;
             }
 
@@ -290,7 +290,7 @@ final class BladeCompletionProvider
             }
 
             $boundAttribute = sprintf(':%s', $attribute);
-            if ($typedPrefix !== '' && !str_starts_with($boundAttribute, $typedPrefix)) {
+            if ($typedPrefix !== '' && ! str_starts_with($boundAttribute, $typedPrefix)) {
                 continue;
             }
 
@@ -430,7 +430,7 @@ final class BladeCompletionProvider
         foreach ($slots as $slot) {
             $slotName = $slot['name'];
 
-            if ($typedPrefix !== '' && !str_starts_with($slotName, $typedPrefix)) {
+            if ($typedPrefix !== '' && ! str_starts_with($slotName, $typedPrefix)) {
                 continue;
             }
 
@@ -495,7 +495,7 @@ final class BladeCompletionProvider
             return null;
         }
 
-        if (!isset($matches) || !is_array($matches)) {
+        if (! isset($matches) || ! is_array($matches)) {
             return null;
         }
 
@@ -525,7 +525,7 @@ final class BladeCompletionProvider
                 continue;
             }
 
-            if (!$isSelfClosing) {
+            if (! $isSelfClosing) {
                 $stack[] = $name;
             }
         }
@@ -539,7 +539,7 @@ final class BladeCompletionProvider
 
     private function componentNameFromNodeContext(?object $node, bool $excludeSlotComponents): ?string
     {
-        if (!$node instanceof Node) {
+        if (! $node instanceof Node) {
             return null;
         }
 
@@ -549,8 +549,9 @@ final class BladeCompletionProvider
             if ($current instanceof ElementNode && $current->isComponent()) {
                 $tagName = strtolower($current->tagNameText());
 
-                if (!str_starts_with($tagName, 'x-')) {
+                if (! str_starts_with($tagName, 'x-')) {
                     $current = $current->getParent();
+
                     continue;
                 }
 
@@ -558,11 +559,13 @@ final class BladeCompletionProvider
 
                 if ($componentName === '') {
                     $current = $current->getParent();
+
                     continue;
                 }
 
                 if ($excludeSlotComponents && (str_starts_with($componentName, 'slot') || str_starts_with($componentName, 'slot:'))) {
                     $current = $current->getParent();
+
                     continue;
                 }
 
@@ -599,7 +602,7 @@ final class BladeCompletionProvider
     private function linePrefixFromText(string $text, int $line, int $character): ?string
     {
         $lines = preg_split('/\R/u', $text);
-        if ($lines === false || !isset($lines[$line])) {
+        if ($lines === false || ! isset($lines[$line])) {
             return null;
         }
 
@@ -610,7 +613,7 @@ final class BladeCompletionProvider
     {
         $lines = preg_split('/\R/u', $text);
 
-        if ($lines === false || !isset($lines[$line])) {
+        if ($lines === false || ! isset($lines[$line])) {
             return null;
         }
 

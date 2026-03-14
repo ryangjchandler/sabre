@@ -14,11 +14,9 @@ use Phpactor\LanguageServerProtocol\CompletionParams;
 use Phpactor\LanguageServerProtocol\ServerCapabilities;
 use RyanChandler\Sabre\LanguageServer\Feature\Completion\BladeCompletionProvider;
 
-final class CompletionHandler implements Handler, CanRegisterCapabilities
+final class CompletionHandler implements CanRegisterCapabilities, Handler
 {
-    public function __construct(private readonly BladeCompletionProvider $provider)
-    {
-    }
+    public function __construct(private readonly BladeCompletionProvider $provider) {}
 
     public function methods(): array
     {

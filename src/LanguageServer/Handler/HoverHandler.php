@@ -13,11 +13,9 @@ use Phpactor\LanguageServerProtocol\HoverParams;
 use Phpactor\LanguageServerProtocol\ServerCapabilities;
 use RyanChandler\Sabre\LanguageServer\Feature\Hover\BladeHoverProvider;
 
-final class HoverHandler implements Handler, CanRegisterCapabilities
+final class HoverHandler implements CanRegisterCapabilities, Handler
 {
-    public function __construct(private readonly BladeHoverProvider $provider)
-    {
-    }
+    public function __construct(private readonly BladeHoverProvider $provider) {}
 
     public function methods(): array
     {

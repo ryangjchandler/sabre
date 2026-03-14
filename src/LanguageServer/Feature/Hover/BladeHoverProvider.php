@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace RyanChandler\Sabre\LanguageServer\Feature\Hover;
 
-use Forte\Ast\Elements\ElementNode;
 use Forte\Ast\Elements\ElementNameNode;
+use Forte\Ast\Elements\ElementNode;
 use Phpactor\LanguageServer\Core\Workspace\Workspace;
 use Phpactor\LanguageServerProtocol\Hover;
 use Phpactor\LanguageServerProtocol\HoverParams;
@@ -13,10 +13,10 @@ use Phpactor\LanguageServerProtocol\MarkupContent;
 use Phpactor\LanguageServerProtocol\MarkupKind;
 use Phpactor\LanguageServerProtocol\Position;
 use Phpactor\LanguageServerProtocol\Range;
+use RuntimeException;
 use RyanChandler\Sabre\Blade\Components\BladeComponentCatalog;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
 use RyanChandler\Sabre\Blade\Hover\ForteHoverProvider;
-use RuntimeException;
 
 final class BladeHoverProvider
 {
@@ -25,8 +25,7 @@ final class BladeHoverProvider
         private readonly ForteDocumentParser $documentParser,
         private readonly BladeComponentCatalog $componentCatalog,
         private readonly ForteHoverProvider $hoverProvider,
-    ) {
-    }
+    ) {}
 
     public function provide(HoverParams $params): ?Hover
     {
@@ -84,7 +83,7 @@ final class BladeHoverProvider
     {
         $tagName = strtolower($element->tagNameText());
 
-        if (!str_starts_with($tagName, 'x-')) {
+        if (! str_starts_with($tagName, 'x-')) {
             return null;
         }
 
@@ -149,7 +148,7 @@ final class BladeHoverProvider
     }
 
     /**
-     * @param list<array{name: string, isBoolean: bool, required: bool, type: string|null, default: string|null, source: string}> $props
+     * @param  list<array{name: string, isBoolean: bool, required: bool, type: string|null, default: string|null, source: string}>  $props
      * @return list<string>
      */
     private function renderPropsSection(array $props): array
@@ -197,7 +196,7 @@ final class BladeHoverProvider
     }
 
     /**
-     * @param list<array{name: string, required: bool}> $slots
+     * @param  list<array{name: string, required: bool}>  $slots
      * @return list<string>
      */
     private function renderSlotsSection(array $slots): array

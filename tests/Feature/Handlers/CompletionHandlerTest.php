@@ -147,8 +147,8 @@ test('component completion inserts closing tag for required slots and self-close
     LanguageServerTestHarness::createBladeDocument($workspace, "<div>\n{{ \$slot }}\n</div>", 'resources/views/components/panel.blade.php');
     LanguageServerTestHarness::createBladeDocument($workspace, "<footer>\n{{ \$subtitle ?? '' }}\n</footer>", 'resources/views/components/card/footer.blade.php');
 
-    $required = LanguageServerTestHarness::createBladeDocument($workspace, "<x-pan[[cursor]]", 'resources/views/required-slot.blade.php');
-    $optional = LanguageServerTestHarness::createBladeDocument($workspace, "<x-card.foo[[cursor]]", 'resources/views/optional-slot.blade.php');
+    $required = LanguageServerTestHarness::createBladeDocument($workspace, '<x-pan[[cursor]]', 'resources/views/required-slot.blade.php');
+    $optional = LanguageServerTestHarness::createBladeDocument($workspace, '<x-card.foo[[cursor]]', 'resources/views/optional-slot.blade.php');
 
     LanguageServerTestHarness::openTestDocument($tester, $required);
     $requiredList = LanguageServerTestHarness::requestCompletionAtCursor($tester, $required);

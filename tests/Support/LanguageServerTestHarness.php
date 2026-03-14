@@ -24,12 +24,12 @@ use Phpactor\LanguageServerProtocol\Location;
 use Phpactor\LanguageServerProtocol\Position;
 use Phpactor\LanguageServerProtocol\PublishDiagnosticsParams;
 use Phpactor\LanguageServerProtocol\Range;
-use Phpactor\LanguageServerProtocol\TextDocumentIdentifier;
 use Phpactor\LanguageServerProtocol\TextDocumentContentChangeIncrementalEvent;
+use Phpactor\LanguageServerProtocol\TextDocumentIdentifier;
 use Phpactor\LanguageServerProtocol\VersionedTextDocumentIdentifier;
 use Psr\Log\NullLogger;
-use RyanChandler\Sabre\LanguageServer\SabreDispatcherFactory;
 use RuntimeException;
+use RyanChandler\Sabre\LanguageServer\SabreDispatcherFactory;
 
 final class LanguageServerTestHarness
 {
@@ -40,7 +40,7 @@ final class LanguageServerTestHarness
 
     public static function createTester(?TestWorkspace $workspace = null): LanguageServerTester
     {
-        $builder = LanguageServerBuilder::create(new SabreDispatcherFactory(new NullLogger()));
+        $builder = LanguageServerBuilder::create(new SabreDispatcherFactory(new NullLogger));
 
         return $builder->tester(ProtocolFactory::initializeParams($workspace?->rootUri()));
     }
@@ -118,7 +118,7 @@ final class LanguageServerTestHarness
         $diagnostics = [];
 
         while ($message = $messages->shiftNotification()) {
-            if (!is_array($message->params)) {
+            if (! is_array($message->params)) {
                 continue;
             }
 
@@ -146,7 +146,7 @@ final class LanguageServerTestHarness
 
         $result = $response->result;
 
-        if (!$result instanceof CompletionList) {
+        if (! $result instanceof CompletionList) {
             throw new RuntimeException('Expected completion result to be an instance of CompletionList.');
         }
 
@@ -155,7 +155,7 @@ final class LanguageServerTestHarness
 
     public static function requestCompletionAtCursor(LanguageServerTester $tester, TestDocument $document): CompletionList
     {
-        if (!$document->hasCursor()) {
+        if (! $document->hasCursor()) {
             throw new RuntimeException('Document has no cursor marker. Add [[cursor]] to your test content.');
         }
 
@@ -187,7 +187,7 @@ final class LanguageServerTestHarness
             return null;
         }
 
-        if (!$result instanceof Hover) {
+        if (! $result instanceof Hover) {
             throw new RuntimeException('Expected hover result to be an instance of Hover or null.');
         }
 
@@ -196,7 +196,7 @@ final class LanguageServerTestHarness
 
     public static function requestHoverAtCursor(LanguageServerTester $tester, TestDocument $document): ?Hover
     {
-        if (!$document->hasCursor()) {
+        if (! $document->hasCursor()) {
             throw new RuntimeException('Document has no cursor marker. Add [[cursor]] to your test content.');
         }
 
@@ -228,7 +228,7 @@ final class LanguageServerTestHarness
             return null;
         }
 
-        if (!$result instanceof Location) {
+        if (! $result instanceof Location) {
             throw new RuntimeException('Expected definition result to be an instance of Location or null.');
         }
 
@@ -237,7 +237,7 @@ final class LanguageServerTestHarness
 
     public static function requestDefinitionAtCursor(LanguageServerTester $tester, TestDocument $document): ?Location
     {
-        if (!$document->hasCursor()) {
+        if (! $document->hasCursor()) {
             throw new RuntimeException('Document has no cursor marker. Add [[cursor]] to your test content.');
         }
 
@@ -250,7 +250,7 @@ final class LanguageServerTestHarness
     }
 
     /**
-     * @param list<array<string, mixed>> $diagnostics
+     * @param  list<array<string, mixed>>  $diagnostics
      */
     public static function publishDiagnostics(
         LanguageServerTester $tester,

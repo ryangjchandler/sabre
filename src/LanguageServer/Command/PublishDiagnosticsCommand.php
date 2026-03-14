@@ -11,12 +11,10 @@ use Phpactor\LanguageServer\Core\Server\ClientApi;
 
 final class PublishDiagnosticsCommand implements Command
 {
-    public function __construct(private readonly ClientApi $clientApi)
-    {
-    }
+    public function __construct(private readonly ClientApi $clientApi) {}
 
     /**
-     * @param array<int, array<string, mixed>> $diagnostics
+     * @param  array<int, array<string, mixed>>  $diagnostics
      * @return Promise<null>
      */
     public function __invoke(string $uri, array $diagnostics = [], ?int $version = null): Promise

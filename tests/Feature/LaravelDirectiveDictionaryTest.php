@@ -5,7 +5,7 @@ declare(strict_types=1);
 use RyanChandler\Sabre\Blade\Directives\LaravelDirectiveDictionary;
 
 test('it returns descriptions for known first-party directives', function (): void {
-    $dictionary = new LaravelDirectiveDictionary();
+    $dictionary = new LaravelDirectiveDictionary;
 
     expect($dictionary->descriptionFor('if'))
         ->toBe('Conditionally render content when an expression evaluates to true.');
@@ -15,7 +15,7 @@ test('it returns descriptions for known first-party directives', function (): vo
 });
 
 test('it normalizes directive names for lookups', function (): void {
-    $dictionary = new LaravelDirectiveDictionary();
+    $dictionary = new LaravelDirectiveDictionary;
 
     expect($dictionary->descriptionFor('  @EnDaUtH '))
         ->toBe('Close an @auth conditional block.');
@@ -24,7 +24,7 @@ test('it normalizes directive names for lookups', function (): void {
 });
 
 test('it returns null for unknown directives', function (): void {
-    $dictionary = new LaravelDirectiveDictionary();
+    $dictionary = new LaravelDirectiveDictionary;
 
     expect($dictionary->descriptionFor('@myCustomDirective'))->toBeNull();
     expect($dictionary->has('@myCustomDirective'))->toBeFalse();

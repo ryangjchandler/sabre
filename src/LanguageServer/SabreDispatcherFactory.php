@@ -46,24 +46,22 @@ use RyanChandler\Sabre\LanguageServer\Listener\BladeDiagnosticsListener;
 
 final class SabreDispatcherFactory implements DispatcherFactory
 {
-    public function __construct(private readonly LoggerInterface $logger)
-    {
-    }
+    public function __construct(private readonly LoggerInterface $logger) {}
 
     public function create(MessageTransmitter $transmitter, InitializeParams $initializeParams): Dispatcher
     {
-        $responseWatcher = new DeferredResponseWatcher();
+        $responseWatcher = new DeferredResponseWatcher;
         $clientApi = new ClientApi(new JsonRpcClient($transmitter, $responseWatcher));
 
-        $serviceManager = new ServiceManager(new ServiceProviders(), $this->logger);
-        $workspace = new Workspace();
-        $documentParser = new ForteDocumentParser();
-        $diagnosticConverter = new ForteDiagnosticConverter();
+        $serviceManager = new ServiceManager(new ServiceProviders, $this->logger);
+        $workspace = new Workspace;
+        $documentParser = new ForteDocumentParser;
+        $diagnosticConverter = new ForteDiagnosticConverter;
         $eventDispatcher = new AggregateEventDispatcher(
             new WorkspaceListener($workspace),
             new BladeDiagnosticsListener($workspace, $clientApi, $documentParser, $diagnosticConverter)
         );
-        $directiveDictionary = new LaravelDirectiveDictionary();
+        $directiveDictionary = new LaravelDirectiveDictionary;
         $forteHoverProvider = new ForteHoverProvider($directiveDictionary);
         $componentCatalog = new BladeComponentCatalog($documentParser);
         $completionProvider = new BladeCompletionProvider($workspace, $documentParser, $componentCatalog, $this->logger);
@@ -85,8 +83,8 @@ final class SabreDispatcherFactory implements DispatcherFactory
         $runner = new HandlerMethodRunner(
             $handlers,
             new ChainArgumentResolver(
-                new LanguageSeverProtocolParamsResolver(),
-                new PassThroughArgumentResolver()
+                new LanguageSeverProtocolParamsResolver,
+                new PassThroughArgumentResolver
             ),
             $this->logger
         );

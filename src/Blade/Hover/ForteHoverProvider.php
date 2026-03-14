@@ -16,15 +16,13 @@ use RyanChandler\Sabre\Blade\Directives\LaravelDirectiveDictionary;
 
 final class ForteHoverProvider
 {
-    public function __construct(private readonly ?LaravelDirectiveDictionary $directiveDictionary = null)
-    {
-    }
+    public function __construct(private readonly ?LaravelDirectiveDictionary $directiveDictionary = null) {}
 
     public function provide(Document $document, int $line, int $character): ?Hover
     {
         $node = $document->findNodeAtPosition($line + 1, $character + 1);
 
-        if (!$node instanceof DirectiveNode && !$node instanceof DirectiveBlockNode) {
+        if (! $node instanceof DirectiveNode && ! $node instanceof DirectiveBlockNode) {
             return null;
         }
 
@@ -83,7 +81,7 @@ final class ForteHoverProvider
 
     private function directiveDescription(string $directive): ?string
     {
-        $dictionary = $this->directiveDictionary ?? new LaravelDirectiveDictionary();
+        $dictionary = $this->directiveDictionary ?? new LaravelDirectiveDictionary;
 
         return $dictionary->descriptionFor($directive);
     }

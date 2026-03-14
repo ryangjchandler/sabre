@@ -8,17 +8,15 @@ use Psr\Log\AbstractLogger;
 
 final class StderrLogger extends AbstractLogger
 {
-    public function __construct(private readonly bool $debugEnabled = false)
-    {
-    }
+    public function __construct(private readonly bool $debugEnabled = false) {}
 
     /**
-     * @param mixed $message
-     * @param array<string, mixed> $context
+     * @param  mixed  $message
+     * @param  array<string, mixed>  $context
      */
     public function log($level, $message, array $context = []): void
     {
-        if ($level === 'debug' && !$this->debugEnabled) {
+        if ($level === 'debug' && ! $this->debugEnabled) {
             return;
         }
 

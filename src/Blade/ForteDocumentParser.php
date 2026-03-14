@@ -10,9 +10,7 @@ use RuntimeException;
 
 final class ForteDocumentParser
 {
-    public function __construct(private readonly ?ParserOptions $parserOptions = null)
-    {
-    }
+    public function __construct(private readonly ?ParserOptions $parserOptions = null) {}
 
     public function parse(string $template, ?string $filePath = null): Document
     {
@@ -27,7 +25,7 @@ final class ForteDocumentParser
 
     public function parseFile(string $path): Document
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             throw new RuntimeException(sprintf('Template file does not exist: %s', $path));
         }
 
@@ -41,7 +39,7 @@ final class ForteDocumentParser
     }
 
     /**
-     * @param list<string> $paths
+     * @param  list<string>  $paths
      * @return array<string, Document>
      */
     public function parseFiles(array $paths): array
@@ -64,7 +62,7 @@ final class ForteDocumentParser
     {
         $path = parse_url($uri, PHP_URL_PATH);
 
-        if (!is_string($path) || $path === '') {
+        if (! is_string($path) || $path === '') {
             throw new RuntimeException(sprintf('Unable to resolve file path from URI: %s', $uri));
         }
 

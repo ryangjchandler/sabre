@@ -50,7 +50,7 @@ final class ForteDiagnosticConverter
     }
 
     /**
-     * @param list<string> $suggestions
+     * @param  list<string>  $suggestions
      */
     private function formatMessage(Diagnostic $diagnostic, array $suggestions): string
     {
