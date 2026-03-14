@@ -12,11 +12,16 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\Param;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Name;
+use PhpParser\Node\UnionType;
+use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Class_;
+use PhpParser\Node\Stmt;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Parser;
 use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter\Standard;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;
@@ -26,10 +31,12 @@ use RyanChandler\Sabre\Blade\ForteDocumentParser;
 final class BladeComponentCatalog
 {
     private Parser $phpParser;
+    private Standard $prettyPrinter;
 
     public function __construct(private readonly ForteDocumentParser $documentParser)
     {
         $this->phpParser = (new ParserFactory())->createForNewestSupportedVersion();
+        $this->prettyPrinter = new Standard();
     }
 
     /**
@@ -67,6 +74,54 @@ final class BladeComponentCatalog
         }
 
         return null;
+    }
+
+    /**
+     * @return array{
+     *   tag: string,
+     *   className: string|null,
+     *   absolutePath: string,
+     *   relativePath: string,
+     *   props: list<array{name: string, isBoolean: bool}>,
+     *   slots: list<array{name: string, required: bool}>
+     * }|null
+     */
+    public function componentHoverMetadata(string $uri, string $componentName): ?array
+    {
+        try {
+            $path = $this->documentParser->uriToPath($uri);
+        } catch (RuntimeException) {
+            return null;
+        }
+
+        $projectRoot = $this->findProjectRoot($path);
+
+        if ($projectRoot === null) {
+            return null;
+        }
+
+        $classPath = $this->resolveClassComponentPath($uri, $componentName);
+        $classExists = $classPath !== null && is_file($classPath);
+
+        $templatePath = $this->resolveComponentTemplatePath($uri, $componentName);
+        $templateExists = $templatePath !== null && is_file($templatePath);
+
+        $componentPath = $classExists ? $classPath : ($templateExists ? $templatePath : null);
+
+        if ($componentPath === null) {
+            return null;
+        }
+
+        $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', substr($componentPath, strlen(rtrim($projectRoot, DIRECTORY_SEPARATOR)) + 1));
+
+        return [
+            'tag' => sprintf('x-%s', $componentName),
+            'className' => $classExists ? $this->componentNameToClassName($componentName) : null,
+            'absolutePath' => $componentPath,
+            'relativePath' => $relativePath,
+            'props' => $this->propMetadataForComponent($uri, $componentName),
+            'slots' => $this->slotDefinitionsForComponent($uri, $componentName),
+        ];
     }
 
     public function hasRequiredSlotsForComponent(string $uri, string $componentName): bool
@@ -320,28 +375,10 @@ final class BladeComponentCatalog
      */
     public function attributeDefinitionsForComponent(string $uri, string $componentName): array
     {
-        $attributes = [];
-
-        $componentTemplate = $this->resolveComponentTemplatePath($uri, $componentName);
-        if ($componentTemplate !== null && is_file($componentTemplate)) {
-            try {
-                $document = $this->documentParser->parseFile($componentTemplate);
-
-                foreach ($document->findDirectivesByName('props') as $directive) {
-                    if (!$directive instanceof DirectiveNode || !$directive->hasArguments()) {
-                        continue;
-                    }
-
-                    $attributes = array_merge($attributes, $this->extractPropsFromDirectiveArguments($directive->arguments()));
-                }
-            } catch (RuntimeException) {
-            }
-        }
-
-        $classComponentPath = $this->resolveClassComponentPath($uri, $componentName);
-        if ($classComponentPath !== null && is_file($classComponentPath)) {
-            $attributes = array_merge($attributes, $this->extractPropsFromClassComponent($classComponentPath));
-        }
+        $attributes = array_map(
+            static fn (array $prop): array => ['name' => $prop['name'], 'isBoolean' => $prop['isBoolean']],
+            $this->propMetadataForComponent($uri, $componentName)
+        );
 
         $index = [];
 
@@ -371,7 +408,62 @@ final class BladeComponentCatalog
     }
 
     /**
-     * @return list<array{name: string, isBoolean: bool}>
+     * @return list<array{name: string, isBoolean: bool, required: bool, type: string|null, default: string|null, source: string}>
+     */
+    public function propMetadataForComponent(string $uri, string $componentName): array
+    {
+        $props = [];
+
+        $componentTemplate = $this->resolveComponentTemplatePath($uri, $componentName);
+        if ($componentTemplate !== null && is_file($componentTemplate)) {
+            try {
+                $document = $this->documentParser->parseFile($componentTemplate);
+
+                foreach ($document->findDirectivesByName('props') as $directive) {
+                    if (!$directive instanceof DirectiveNode || !$directive->hasArguments()) {
+                        continue;
+                    }
+
+                    $props = array_merge($props, $this->extractPropsFromDirectiveArguments($directive->arguments()));
+                }
+            } catch (RuntimeException) {
+            }
+        }
+
+        $classComponentPath = $this->resolveClassComponentPath($uri, $componentName);
+        if ($classComponentPath !== null && is_file($classComponentPath)) {
+            $props = array_merge($props, $this->extractPropsFromClassComponent($classComponentPath));
+        }
+
+        $merged = [];
+
+        foreach ($props as $prop) {
+            $name = $prop['name'];
+
+            if (!isset($merged[$name])) {
+                $merged[$name] = $prop;
+                continue;
+            }
+
+            $existing = $merged[$name];
+            $merged[$name] = [
+                'name' => $name,
+                'isBoolean' => $existing['isBoolean'] || $prop['isBoolean'],
+                'required' => $existing['required'] || $prop['required'],
+                'type' => $existing['type'] ?? $prop['type'],
+                'default' => $existing['default'] ?? $prop['default'],
+                'source' => $existing['source'],
+            ];
+        }
+
+        $definitions = array_values($merged);
+        usort($definitions, static fn (array $left, array $right): int => $left['name'] <=> $right['name']);
+
+        return $definitions;
+    }
+
+    /**
+     * @return list<array{name: string, isBoolean: bool, required: bool, type: string|null, default: string|null, source: string}>
      */
     private function extractPropsFromDirectiveArguments(?string $arguments): array
     {
@@ -416,6 +508,10 @@ final class BladeComponentCatalog
                 $props[] = [
                     'name' => $item->key->value,
                     'isBoolean' => $this->isBooleanExpression($item->value),
+                    'required' => false,
+                    'type' => null,
+                    'default' => $this->prettyPrintExpression($item->value),
+                    'source' => 'template',
                 ];
                 continue;
             }
@@ -424,6 +520,10 @@ final class BladeComponentCatalog
                 $props[] = [
                     'name' => $item->value->value,
                     'isBoolean' => false,
+                    'required' => true,
+                    'type' => null,
+                    'default' => null,
+                    'source' => 'template',
                 ];
             }
         }
@@ -432,7 +532,7 @@ final class BladeComponentCatalog
     }
 
     /**
-     * @return list<array{name: string, isBoolean: bool}>
+     * @return list<array{name: string, isBoolean: bool, required: bool, type: string|null, default: string|null, source: string}>
      */
     private function extractPropsFromClassComponent(string $path): array
     {
@@ -479,6 +579,10 @@ final class BladeComponentCatalog
             $attributes[] = [
                 'name' => $this->camelToKebab($name),
                 'isBoolean' => $this->isBooleanParameter($param),
+                'required' => $param->default === null,
+                'type' => $this->typeToString($param->type),
+                'default' => $param->default === null ? null : $this->prettyPrintExpression($param->default),
+                'source' => 'class',
             ];
         }
 
@@ -515,6 +619,46 @@ final class BladeComponentCatalog
         }
 
         return false;
+    }
+
+    private function prettyPrintExpression(Node\Expr $expression): string
+    {
+        return trim($this->prettyPrinter->prettyPrintExpr($expression));
+    }
+
+    private function typeToString(null|Identifier|Name|NullableType|UnionType|IntersectionType $type): ?string
+    {
+        if ($type === null) {
+            return null;
+        }
+
+        if ($type instanceof Identifier) {
+            return $type->toString();
+        }
+
+        if ($type instanceof Name) {
+            return $type->toString();
+        }
+
+        if ($type instanceof NullableType) {
+            $inner = $this->typeToString($type->type);
+
+            return $inner === null ? null : '?'.$inner;
+        }
+
+        if ($type instanceof UnionType) {
+            $parts = array_map(fn ($part): string => $this->typeToString($part) ?? 'mixed', $type->types);
+
+            return implode('|', $parts);
+        }
+
+        if ($type instanceof IntersectionType) {
+            $parts = array_map(fn ($part): string => $this->typeToString($part) ?? 'mixed', $type->types);
+
+            return implode('&', $parts);
+        }
+
+        return null;
     }
 
     private function firstClassNode(array $nodes): ?Class_
@@ -618,6 +762,14 @@ final class BladeComponentCatalog
         }
 
         return implode('', array_map(static fn (string $part): string => ucfirst($part), $parts));
+    }
+
+    private function componentNameToClassName(string $componentName): string
+    {
+        $segments = explode('.', $componentName);
+        $segments = array_map($this->segmentToStudly(...), $segments);
+
+        return 'App\\View\\Components\\'.implode('\\', $segments);
     }
 
     private function segmentToKebab(string $segment): string

@@ -37,6 +37,12 @@ test('opening invalid Blade publishes Forte diagnostics', function (): void {
     expect($published)->toHaveCount(1);
     expect($published[0]->uri)->toBe($document->uri);
     expect($published[0]->diagnostics)->toHaveCount(1);
+    expect($published[0]->diagnostics[0]->message)->toContain('[LEXER:UnexpectedEof]');
+    expect($published[0]->diagnostics[0]->message)->toContain('Try:');
+    expect($published[0]->diagnostics[0]->data)->toBeArray();
+    expect($published[0]->diagnostics[0]->data['origin'])->toBe('forte');
+    expect($published[0]->diagnostics[0]->data['suggestions'])->toBeArray();
+    expect($published[0]->diagnostics[0]->data['suggestions'])->not->toBeEmpty();
 });
 
 test('diagnostics are ignored for non-blade files and cleared on close for blade files', function (): void {

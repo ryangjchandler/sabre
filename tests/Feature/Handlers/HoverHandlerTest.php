@@ -67,3 +67,79 @@ test('hover reflects latest text after incremental document changes', function (
     expect($hover)->not->toBeNull();
     expect($hover->contents->value)->toContain('@if($second)');
 });
+
+test('hover on anonymous component shows component metadata', function (): void {
+    $workspace = LanguageServerTestHarness::createWorkspace();
+    $tester = LanguageServerTestHarness::createTester($workspace);
+    LanguageServerTestHarness::initialize($tester);
+
+    LanguageServerTestHarness::createBladeDocument(
+        $workspace,
+        <<<'BLADE'
+@props(['variant' => 'info', 'dismissible' => false])
+<div>
+    {{ $title }}
+    {{ $slot }}
+</div>
+BLADE,
+        'resources/views/components/alert.blade.php'
+    );
+
+    $usage = LanguageServerTestHarness::createBladeDocument(
+        $workspace,
+        <<<'BLADE'
+<x-ale[[cursor]]rt />
+BLADE,
+        'resources/views/hover-component-usage.blade.php'
+    );
+
+    LanguageServerTestHarness::openTestDocument($tester, $usage);
+    $hover = LanguageServerTestHarness::requestHoverAtCursor($tester, $usage);
+
+    expect($hover)->not->toBeNull();
+    expect($hover->contents)->toBeInstanceOf(MarkupContent::class);
+    expect($hover->contents->value)->toContain('### `x-alert`');
+    expect($hover->contents->value)->toContain('**Path**: [`resources/views/components/alert.blade.php`](file://');
+    expect($hover->contents->value)->toContain('#### Props');
+    expect($hover->contents->value)->toContain('**Optional**');
+    expect($hover->contents->value)->toContain('`variant`');
+    expect($hover->contents->value)->toContain('default `\'info\'`');
+    expect($hover->contents->value)->toContain('`dismissible`');
+    expect($hover->contents->value)->toContain('boolean');
+    expect($hover->contents->value)->toContain('#### Slots');
+    expect($hover->contents->value)->toContain('**Required**');
+    expect($hover->contents->value)->toContain('`title`');
+});
+
+test('hover on class component includes class name and class path', function (): void {
+    $workspace = LanguageServerTestHarness::createWorkspace();
+    $tester = LanguageServerTestHarness::createTester($workspace);
+    LanguageServerTestHarness::initialize($tester);
+
+    $workspace->put('app/View/Components/AlertBanner.php', <<<'PHP'
+<?php
+namespace App\View\Components;
+use Illuminate\View\Component;
+final class AlertBanner extends Component
+{
+    public function __construct(public string $title) {}
+}
+PHP
+    );
+
+    $usage = LanguageServerTestHarness::createBladeDocument(
+        $workspace,
+        <<<'BLADE'
+<x-alert-ban[[cursor]]ner />
+BLADE,
+        'resources/views/hover-class-component-usage.blade.php'
+    );
+
+    LanguageServerTestHarness::openTestDocument($tester, $usage);
+    $hover = LanguageServerTestHarness::requestHoverAtCursor($tester, $usage);
+
+    expect($hover)->not->toBeNull();
+    expect($hover->contents->value)->toContain('### `x-alert-banner` (`App\\View\\Components\\AlertBanner`)');
+    expect($hover->contents->value)->toContain('**Path**: [`app/View/Components/AlertBanner.php`](file://');
+    expect($hover->contents->value)->toContain('`title` (type `string`, source `class`)');
+});

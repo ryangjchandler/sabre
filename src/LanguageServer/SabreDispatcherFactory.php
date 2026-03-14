@@ -67,7 +67,7 @@ final class SabreDispatcherFactory implements DispatcherFactory
         $forteHoverProvider = new ForteHoverProvider($directiveDictionary);
         $componentCatalog = new BladeComponentCatalog($documentParser);
         $completionProvider = new BladeCompletionProvider($workspace, $documentParser, $componentCatalog, $this->logger);
-        $hoverProvider = new BladeHoverProvider($workspace, $documentParser, $forteHoverProvider);
+        $hoverProvider = new BladeHoverProvider($workspace, $documentParser, $componentCatalog, $forteHoverProvider);
         $definitionProvider = new BladeDefinitionProvider($workspace, $documentParser, $componentCatalog);
 
         $handlers = new Handlers(
