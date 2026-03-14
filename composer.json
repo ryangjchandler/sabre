@@ -1,0 +1,19 @@
+{
+    "name": "ryangjchandler/sabre",
+    "description": "A language server for Laravel Blade.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ryan Chandler",
+            "email": "ryangjchandler@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "RyanChandler\\Sabre\\": "src/"
+        }
+    }
+}
