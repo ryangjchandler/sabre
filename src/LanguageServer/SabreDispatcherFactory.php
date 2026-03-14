@@ -39,6 +39,9 @@ use RyanChandler\Sabre\Blade\Directives\LaravelDirectiveDictionary;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
 use RyanChandler\Sabre\Blade\Hover\ForteHoverProvider;
 use RyanChandler\Sabre\LanguageServer\Command\PublishDiagnosticsCommand;
+use RyanChandler\Sabre\LanguageServer\Feature\Completion\BladeCompletionProvider;
+use RyanChandler\Sabre\LanguageServer\Feature\Definition\BladeDefinitionProvider;
+use RyanChandler\Sabre\LanguageServer\Feature\Hover\BladeHoverProvider;
 use RyanChandler\Sabre\LanguageServer\Listener\BladeDiagnosticsListener;
 
 final class SabreDispatcherFactory implements DispatcherFactory
@@ -61,8 +64,11 @@ final class SabreDispatcherFactory implements DispatcherFactory
             new BladeDiagnosticsListener($workspace, $clientApi, $documentParser, $diagnosticConverter)
         );
         $directiveDictionary = new LaravelDirectiveDictionary();
-        $hoverProvider = new ForteHoverProvider($directiveDictionary);
+        $forteHoverProvider = new ForteHoverProvider($directiveDictionary);
         $componentCatalog = new BladeComponentCatalog($documentParser);
+        $completionProvider = new BladeCompletionProvider($workspace, $documentParser, $componentCatalog, $this->logger);
+        $hoverProvider = new BladeHoverProvider($workspace, $documentParser, $forteHoverProvider);
+        $definitionProvider = new BladeDefinitionProvider($workspace, $documentParser, $componentCatalog);
 
         $handlers = new Handlers(
             new Handler\TextDocumentSyncHandler($eventDispatcher, $workspace),
@@ -71,7 +77,9 @@ final class SabreDispatcherFactory implements DispatcherFactory
                 'sabre.debug.publishDiagnostics' => new PublishDiagnosticsCommand($clientApi),
             ])),
             new ExitHandler($eventDispatcher),
-            new Handler\BladeLanguageFeaturesHandler($workspace, $documentParser, $hoverProvider, $componentCatalog, $this->logger)
+            new Handler\CompletionHandler($completionProvider),
+            new Handler\HoverHandler($hoverProvider),
+            new Handler\DefinitionHandler($definitionProvider)
         );
 
         $runner = new HandlerMethodRunner(

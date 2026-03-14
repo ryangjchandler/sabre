@@ -2,101 +2,41 @@
 
 declare(strict_types=1);
 
-namespace RyanChandler\Sabre\LanguageServer\Handler;
+namespace RyanChandler\Sabre\LanguageServer\Feature\Completion;
 
-use Amp\Promise;
-use Amp\Success;
 use Forte\Ast\DirectiveBlockNode;
 use Forte\Ast\DirectiveNode;
 use Forte\Ast\Elements\ElementNode;
-use Forte\Ast\Elements\ElementNameNode;
 use Forte\Ast\Node;
 use Forte\Parser\Directives\Directives;
 use Phpactor\LanguageServer\Core\Workspace\Workspace;
-use Phpactor\LanguageServer\Core\Handler\CanRegisterCapabilities;
-use Phpactor\LanguageServer\Core\Handler\Handler;
 use Phpactor\LanguageServerProtocol\CompletionItem;
 use Phpactor\LanguageServerProtocol\CompletionItemKind;
 use Phpactor\LanguageServerProtocol\CompletionList;
-use Phpactor\LanguageServerProtocol\CompletionOptions;
 use Phpactor\LanguageServerProtocol\CompletionParams;
-use Phpactor\LanguageServerProtocol\DefinitionParams;
-use Phpactor\LanguageServerProtocol\Hover;
-use Phpactor\LanguageServerProtocol\HoverParams;
 use Phpactor\LanguageServerProtocol\InsertTextFormat;
-use Phpactor\LanguageServerProtocol\Location;
-use Phpactor\LanguageServerProtocol\Position;
-use Phpactor\LanguageServerProtocol\Range;
-use Phpactor\LanguageServerProtocol\ServerCapabilities;
 use Psr\Log\LoggerInterface;
 use RyanChandler\Sabre\Blade\Components\BladeComponentCatalog;
 use RyanChandler\Sabre\Blade\ForteDocumentParser;
-use RyanChandler\Sabre\Blade\Hover\ForteHoverProvider;
 use RuntimeException;
 
-final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabilities
+final class BladeCompletionProvider
 {
     public function __construct(
         private readonly Workspace $workspace,
         private readonly ForteDocumentParser $documentParser,
-        private readonly ForteHoverProvider $hoverProvider,
         private readonly BladeComponentCatalog $componentCatalog,
         private readonly LoggerInterface $logger,
     ) {
     }
 
-    public function methods(): array
-    {
-        return [
-            'textDocument/hover' => 'hover',
-            'textDocument/completion' => 'completion',
-            'textDocument/definition' => 'definition',
-        ];
-    }
-
-    public function registerCapabiltiies(ServerCapabilities $capabilities): void
-    {
-        $capabilities->hoverProvider = true;
-        $capabilities->completionProvider = new CompletionOptions(['@', '<', ' ', ':', '-', '.']);
-        $capabilities->definitionProvider = true;
-    }
-
-    /**
-     * @return Promise<Hover|null>
-     */
-    public function hover(HoverParams $params): Promise
-    {
-        $uri = $params->textDocument->uri;
-
-        try {
-            if ($this->workspace->has($uri)) {
-                $item = $this->workspace->get($uri);
-                $filePath = $this->documentParser->uriToPath($uri);
-                $document = $this->documentParser->parse($item->text, $filePath);
-            } else {
-                $document = $this->documentParser->parseUri($uri);
-            }
-        } catch (RuntimeException) {
-            return new Success(null);
-        }
-
-        return new Success($this->hoverProvider->provide(
-            $document,
-            $params->position->line,
-            $params->position->character
-        ));
-    }
-
-    /**
-     * @return Promise<CompletionList>
-     */
-    public function completion(CompletionParams $params): Promise
+    public function provide(CompletionParams $params): CompletionList
     {
         $uri = $params->textDocument->uri;
         $documentText = $this->documentText($uri);
 
         if ($documentText === null) {
-            return new Success(new CompletionList(false, []));
+            return new CompletionList(false, []);
         }
 
         $linePrefix = $this->linePrefixFromText($documentText, $params->position->line, $params->position->character);
@@ -112,12 +52,12 @@ final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabili
             if ($slotContext !== null) {
                 $this->logger->debug('Slot completion context detected.', $slotContext);
 
-                return new Success(new CompletionList(false, $this->slotCompletions(
+                return new CompletionList(false, $this->slotCompletions(
                     $uri,
                     $slotContext['component'],
                     $slotContext['style'],
                     $slotContext['typedPrefix']
-                )));
+                ));
             }
 
             if (str_contains($linePrefix, '<x-slot')) {
@@ -133,20 +73,20 @@ final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabili
             $componentContext = $this->componentAttributeContext($documentPrefix, $nodeComponent);
 
             if ($componentContext !== null) {
-                return new Success(new CompletionList(false, $this->componentAttributeCompletions(
+                return new CompletionList(false, $this->componentAttributeCompletions(
                     $uri,
                     $componentContext['component'],
                     $componentContext['attributePrefix']
-                )));
+                ));
             }
         }
 
         if ($this->isComponentNameContext($node, $linePrefix)) {
-            return new Success(new CompletionList(false, $this->componentCompletions($uri)));
+            return new CompletionList(false, $this->componentCompletions($uri));
         }
 
         if (!$this->shouldProvideDirectiveCompletions($node, $linePrefix)) {
-            return new Success(new CompletionList(false, []));
+            return new CompletionList(false, []);
         }
 
         $items = [];
@@ -171,49 +111,7 @@ final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabili
             );
         }
 
-        return new Success(new CompletionList(false, $items));
-    }
-
-    /**
-     * @return Promise<Location|null>
-     */
-    public function definition(DefinitionParams $params): Promise
-    {
-        $uri = $params->textDocument->uri;
-        $documentText = $this->documentText($uri);
-
-        if ($documentText === null) {
-            return new Success(null);
-        }
-
-        $document = $this->parseDocumentFromText($uri, $documentText);
-        $node = $this->nodeAtPosition($document, $params->position->line, $params->position->character);
-        $element = $this->resolveComponentElementFromNode($node);
-
-        if (!$element instanceof ElementNode || !$element->isComponent()) {
-            return new Success(null);
-        }
-
-        $tagName = strtolower($element->tagNameText());
-        if (!str_starts_with($tagName, 'x-')) {
-            return new Success(null);
-        }
-
-        $componentName = substr($tagName, 2);
-        if ($componentName === '') {
-            return new Success(null);
-        }
-
-        $targetPath = $this->componentCatalog->resolveDefinitionPath($uri, $componentName);
-
-        if ($targetPath === null) {
-            return new Success(null);
-        }
-
-        return new Success(new Location(
-            $this->pathToUri($targetPath),
-            new Range(new Position(0, 0), new Position(0, 0))
-        ));
+        return new CompletionList(false, $items);
     }
 
     private function shouldProvideDirectiveCompletions(object|null $node, ?string $linePrefix): bool
@@ -293,28 +191,6 @@ final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabili
         }
 
         return is_object($node) ? $node : null;
-    }
-
-    private function resolveComponentElementFromNode(?object $node): ?ElementNode
-    {
-        if ($node instanceof ElementNode) {
-            return $node;
-        }
-
-        if ($node instanceof ElementNameNode) {
-            $parent = $node->getParent();
-
-            if ($parent instanceof ElementNode) {
-                return $parent;
-            }
-        }
-
-        return null;
-    }
-
-    private function pathToUri(string $path): string
-    {
-        return 'file://'.str_replace(DIRECTORY_SEPARATOR, '/', $path);
     }
 
     /**
@@ -505,7 +381,7 @@ final class BladeLanguageFeaturesHandler implements Handler, CanRegisterCapabili
             ];
         }
 
-        if (preg_match('/<x-slot\s+[^>]*\bname\s*=\s*["\'“”‘’]([^"\'“”‘’]*)$/u', $linePrefix, $matches) === 1) {
+        if (preg_match('/<x-slot\s+[^>]*\bname\s*=\s*["\'"“”‘’]([^"\'“”‘’]*)$/u', $linePrefix, $matches) === 1) {
             return [
                 'component' => $activeComponent,
                 'style' => 'legacy',
