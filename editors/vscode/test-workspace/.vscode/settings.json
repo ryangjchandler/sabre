@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.blade.php": "blade"
+  },
+  "sabre.serverPath": "../../../bin/sabre-language-server",
+  "sabre.trace.server": "verbose"
+}

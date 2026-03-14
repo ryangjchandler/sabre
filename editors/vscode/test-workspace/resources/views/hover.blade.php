@@ -1,0 +1,3 @@
+@if($user)
+    <p>Hello {{ $user->name }}</p>
+@endif

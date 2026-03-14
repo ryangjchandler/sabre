@@ -1,0 +1,65 @@
+{
+  "name": "sabre-vscode",
+  "displayName": "Sabre Blade Language Server",
+  "description": "VSCode client for the Sabre Blade language server",
+  "version": "0.0.1",
+  "publisher": "ryangjchandler",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:blade",
+    "onCommand:sabre.restartLanguageServer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sabre.restartLanguageServer",
+        "title": "Sabre: Restart Language Server"
+      }
+    ],
+    "configuration": {
+      "title": "Sabre",
+      "properties": {
+        "sabre.phpCommand": {
+          "type": "string",
+          "default": "php",
+          "description": "PHP executable used to launch the Sabre language server."
+        },
+        "sabre.serverPath": {
+          "type": "string",
+          "default": "bin/sabre-language-server",
+          "description": "Path to the Sabre language server script. Relative paths resolve from the first workspace folder, then from the extension location."
+        },
+        "sabre.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Enable LSP protocol tracing in the Sabre output channel."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.5.4"
+  }
+}

@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Phpactor\LanguageServer\LanguageServerBuilder;
+use RyanChandler\Sabre\LanguageServer\SabreDispatcherFactory;
+use RyanChandler\Sabre\Support\StderrLogger;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$debugEnabled = getenv('SABRE_DEBUG') === '1';
+
+LanguageServerBuilder::create(new SabreDispatcherFactory(new StderrLogger($debugEnabled)))
+    ->build()
+    ->run();

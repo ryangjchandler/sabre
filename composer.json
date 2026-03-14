@@ -10,10 +10,35 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {},
+    "prefer-stable": true,
+    "require": {
+        "phpactor/language-server": "^7.0",
+        "fortephp/forte": "^1.0",
+        "nikic/php-parser": "^5.7"
+    },
+    "bin": [
+        "bin/sabre-language-server"
+    ],
     "autoload": {
         "psr-4": {
             "RyanChandler\\Sabre\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "RyanChandler\\Sabre\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "pestphp/pest": "^4.0"
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "test:filter": "vendor/bin/pest --filter"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
         }
     }
 }
